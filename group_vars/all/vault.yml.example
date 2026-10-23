@@ -1,0 +1,7 @@
+---
+# Copier ce fichier en vault.yml, remplir les valeurs, puis le chiffrer :
+#
+ansible-vault encrypt group_vars/all/vault.yml
+vault_mdp_localadm: "mot-de-passe-initial-de-localadm"
+vault_mdp_rescue: "mot-de-passe-de-secours-long-et-unique"
+vault_hash_grub: "grub.pbkdf2.sha512.10000.XXXXXXXX.YYYYYYYY"

@@ -1,0 +1,18 @@
+---
+- name: Durcir les serveurs AlmaLinux 9
+  hosts: cibles
+  roles:
+    - role: kernel_anssi
+      tags: kernel_anssi
+    # - role: audit
+    #   tags: audit
+    # - role: comptes_sudo
+    #   tags: comptes_sudo
+    # - role: auth_pam
+    #   tags: auth_pam
+    # - role: ssh_mfa
+    #   tags: ssh_mfa
+    # - role: grub
+    #   tags: grub
+    # - role: socle
+    #   tags: socle

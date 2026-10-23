@@ -1,0 +1,13 @@
+---
+# Comptes
+utilisateur_admin: localadm
+utilisateur_secours: rescue
+utilisateur_ansible: ansible
+# Plage horaire autorisée pour localadm (format pam_time : Al = tous les jours)
+plage_horaire_admin: Al0800-2000
+# Bloquer le chargement de modules noyau 1 minute après chaque démarrage
+bloquer_modules: true
+# Verrouiller le mot de passe de localadm (passer à true après les tests SSH + OTP)
+localadm_mdp_verrouille: false
+# Clé SSH publique de localadm : celle de la VM de contrôle
+cle_publique_admin: "{{ lookup('ansible.builtin.file', lookup('ansible.builtin.env', 'HOME') + '/.ssh/id_ed25519.pub') }}"
