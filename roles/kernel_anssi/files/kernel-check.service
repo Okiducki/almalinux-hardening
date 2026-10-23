@@ -1,0 +1,7 @@
+[Unit]
+Description=Vérification de conformité des paramètres noyau (ANSSI)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/kernel_check.sh -q
+SuccessExitStatus=1

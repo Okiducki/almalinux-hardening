@@ -1,0 +1,45 @@
+---
+- name: Déposer la configuration sysctl ANSSI
+  ansible.builtin.copy:
+    src: 99-anssi.conf
+    dest: /etc/sysctl.d/99-anssi.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Appliquer les paramètres sysctl
+
+- name: Déposer le script de conformité kernel_check.sh
+  ansible.builtin.copy:
+    src: kernel_check.sh
+    dest: /usr/local/sbin/kernel_check.sh
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Déposer les unités systemd (contrôle de conformité et blocage des modules)
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - kernel-check.service
+    - kernel-check.timer
+    - modules-lock.service
+    - modules-lock.timer
+  notify: Recharger systemd
+
+- name: Appliquer tout de suite les changements en attente (sysctl, systemd)
+  ansible.builtin.meta: flush_handlers
+
+- name: Activer le contrôle de conformité toutes les minutes
+  ansible.builtin.systemd_service:
+    name: kernel-check.timer
+    enabled: true
+    state: started
+
+- name: Activer (ou non) le blocage des modules au prochain démarrage
+  ansible.builtin.systemd_service:
+    name: modules-lock.timer
+    enabled: "{{ bloquer_modules }}"

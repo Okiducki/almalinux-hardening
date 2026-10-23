@@ -1,0 +1,10 @@
+[Unit]
+Description=Vérification des paramètres noyau toutes les minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target

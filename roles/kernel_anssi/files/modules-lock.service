@@ -1,0 +1,7 @@
+[Unit]
+Description=Interdiction du chargement de modules noyau (ANSSI)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/sysctl -w kernel.modules_disabled=1
+RemainAfterExit=yes

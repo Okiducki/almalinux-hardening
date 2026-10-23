@@ -1,0 +1,8 @@
+[Unit]
+Description=Bloque le chargement de modules noyau 1 minute après le démarrage
+
+[Timer]
+OnBootSec=1min
+
+[Install]
+WantedBy=timers.target
