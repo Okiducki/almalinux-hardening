@@ -1,0 +1,14 @@
+# Géré par Ansible (rôle ssh_mfa)
+# Lu avant 50-redhat.conf : pour sshd, la première valeur lue l'emporte.
+PermitRootLogin no
+DenyUsers {{ utilisateur_secours }}
+PubkeyAuthentication yes
+PasswordAuthentication no
+PermitEmptyPasswords no
+KbdInteractiveAuthentication yes
+UsePAM yes
+# Phase 1 : la clé SSH, phase 2 : le code OTP (demandé par PAM)
+AuthenticationMethods publickey,keyboard-interactive
+MaxAuthTries 3
+LoginGraceTime 30
+X11Forwarding no

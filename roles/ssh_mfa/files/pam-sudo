@@ -1,0 +1,9 @@
+#%PAM-1.0
+# Géré par Ansible (rôle ssh_mfa)
+# sudo demande le code OTP au lieu du mot de passe. Le compte de secours garde son mot de passe.
+auth       [success=1 default=ignore]  pam_succeed_if.so user = rescue quiet
+auth       [success=done default=die]  pam_google_authenticator.so secret=${HOME}/.ssh/.google_authenticator
+auth       include                     system-auth
+account    include                     system-auth
+password   include                     system-auth
+session    include                     system-auth

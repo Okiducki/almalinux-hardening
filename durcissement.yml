@@ -10,8 +10,8 @@
       tags: comptes_sudo
     - role: auth_pam
       tags: auth_pam
-    # - role: ssh_mfa
-    #   tags: ssh_mfa
+    - role: ssh_mfa
+      tags: ssh_mfa
     # - role: grub
     #   tags: grub
     # - role: socle

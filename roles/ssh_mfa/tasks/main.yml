@@ -1,0 +1,105 @@
+---
+- name: Installer le dépôt EPEL
+  ansible.builtin.dnf:
+    name: epel-release
+    state: present
+
+- name: Installer Google Authenticator, qrencode et rsyslog
+  ansible.builtin.dnf:
+    name:
+      - google-authenticator
+      - qrencode
+      - rsyslog
+    state: present
+
+- name: Installer la clé SSH publique de l'administrateur
+  ansible.posix.authorized_key:
+    user: "{{ utilisateur_admin }}"
+    key: "{{ cle_publique_admin }}"
+
+- name: Vérifier que la clé OTP de l'administrateur a été générée
+  ansible.builtin.stat:
+    path: "/home/{{ utilisateur_admin }}/.ssh/.google_authenticator"
+  register: ssh_mfa_secret
+
+- name: S'arrêter si la clé OTP n'existe pas encore (voir la documentation, étape 8)
+  ansible.builtin.fail:
+    msg: >-
+      La clé OTP de {{ utilisateur_admin }} n'existe pas encore.
+      Connecte-toi en {{ utilisateur_admin }} et lance :
+      google-authenticator -t -d -f -r 3 -R 30 -w 3 -s ~/.ssh/.google_authenticator
+      puis relance le playbook.
+  when: not ssh_mfa_secret.stat.exists
+
+- name: Remettre le bon contexte SELinux sur ~/.ssh (lisible par sshd)
+  ansible.builtin.command: restorecon -Rv /home/{{ utilisateur_admin }}/.ssh
+  register: ssh_mfa_restorecon
+  changed_when: ssh_mfa_restorecon.stdout | length > 0
+
+- name: Déposer le script de journalisation des connexions SSH
+  ansible.builtin.copy:
+    src: pam_ssh_log.sh
+    dest: /usr/local/sbin/pam_ssh_log.sh
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Écrire les messages du script dans /var/log/user_ssh.log
+  ansible.builtin.copy:
+    src: 30-user_ssh.conf
+    dest: /etc/rsyslog.d/30-user_ssh.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Redémarrer rsyslog
+
+- name: Activer rsyslog
+  ansible.builtin.systemd_service:
+    name: rsyslog
+    enabled: true
+    state: started
+
+- name: Configurer PAM pour SSH (code OTP après la clé)
+  ansible.builtin.copy:
+    src: pam-sshd
+    dest: /etc/pam.d/sshd
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+
+- name: Configurer PAM pour sudo (code OTP au lieu du mot de passe)
+  ansible.builtin.copy:
+    src: pam-sudo
+    dest: /etc/pam.d/sudo
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+
+- name: Exception pour le compte d'automatisation (clé seule, pas d'OTP)
+  ansible.builtin.blockinfile:
+    path: /etc/ssh/sshd_config
+    marker: "# {mark} Géré par Ansible : exception pour le compte d'automatisation"
+    insertafter: EOF
+    block: |
+      Match User {{ utilisateur_ansible }}
+          AuthenticationMethods publickey
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Redémarrer sshd
+
+- name: Durcir la configuration de sshd
+  ansible.builtin.template:
+    src: 10-durcissement.conf.j2
+    dest: /etc/ssh/sshd_config.d/10-durcissement.conf
+    owner: root
+    group: root
+    mode: "0600"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Redémarrer sshd
+
+- name: Verrouiller le mot de passe de l'administrateur (clé + OTP uniquement)
+  ansible.builtin.user:
+    name: "{{ utilisateur_admin }}"
+    password_lock: true
+  when: localadm_mdp_verrouille | bool

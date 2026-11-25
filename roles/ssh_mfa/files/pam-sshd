@@ -1,0 +1,26 @@
+#%PAM-1.0
+# Géré par Ansible (rôle ssh_mfa)
+# La clé SSH est vérifiée par sshd ; PAM ne demande que le code OTP (aucun mot de passe).
+auth       required                    pam_faillock.so preauth
+auth       optional                    pam_exec.so quiet /usr/local/sbin/pam_ssh_log.sh
+auth       [success=2 default=bad]     pam_google_authenticator.so secret=${HOME}/.ssh/.google_authenticator
+auth       optional                    pam_exec.so quiet /usr/local/sbin/pam_ssh_log.sh echec
+auth       [default=die]               pam_faillock.so authfail
+auth       required                    pam_faillock.so authsucc
+auth       include                     postlogin
+account    required                    pam_sepermit.so
+account    required                    pam_nologin.so
+account    include                     password-auth
+account    optional                    pam_exec.so quiet /usr/local/sbin/pam_ssh_log.sh
+password   include                     password-auth
+# pam_selinux.so close should be the first session rule
+session    required                    pam_selinux.so close
+session    required                    pam_loginuid.so
+# pam_selinux.so open should only be followed by sessions to be executed in the user context
+session    required                    pam_selinux.so open env_params
+session    required                    pam_namespace.so
+session    optional                    pam_keyinit.so force revoke
+session    optional                    pam_motd.so
+session    include                     password-auth
+session    include                     postlogin
+session    optional                    pam_exec.so quiet /usr/local/sbin/pam_ssh_log.sh
