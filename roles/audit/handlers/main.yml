@@ -1,0 +1,5 @@
+---
+# Sur Red Hat, "systemctl restart auditd" est refusé : on recharge les règles avec augenrules
+- name: Charger les règles d'audit
+  ansible.builtin.command: augenrules --load
+  changed_when: true

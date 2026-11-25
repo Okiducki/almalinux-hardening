@@ -1,0 +1,55 @@
+---
+- name: Installer auditd et ses outils de règles (audit-rules séparé depuis EL10)
+  ansible.builtin.dnf:
+    name:
+      - audit
+      - audit-rules
+    state: present
+
+- name: S'assurer que le dossier des règles d'audit existe
+  ansible.builtin.file:
+    path: /etc/audit/rules.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Vérifier si le fichier de règles par défaut existe
+  ansible.builtin.stat:
+    path: /etc/audit/rules.d/audit.rules
+  register: audit_rules_defaut
+
+- name: Neutraliser une éventuelle règle qui désactive l'audit des appels système
+  ansible.builtin.replace:
+    path: /etc/audit/rules.d/audit.rules
+    regexp: '^-a task,never'
+    replace: '# -a task,never'
+  when: audit_rules_defaut.stat.exists
+  notify: Charger les règles d'audit
+
+- name: Déposer les règles d'audit
+  ansible.builtin.copy:
+    src: 50-durcissement.rules
+    dest: /etc/audit/rules.d/50-durcissement.rules
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Charger les règles d'audit
+
+- name: Activer auditd
+  ansible.builtin.systemd_service:
+    name: auditd
+    enabled: true
+    state: started
+
+- name: Lire les paramètres actuels du noyau par défaut
+  ansible.builtin.command: grubby --info=DEFAULT
+  register: audit_grubby_info
+  changed_when: false
+
+- name: Activer l'audit dès le démarrage du noyau (prend effet au redémarrage)
+  ansible.builtin.command: grubby --update-kernel=ALL --args="audit=1 audit_backlog_limit=8192"
+  when: >-
+    'audit=1' not in audit_grubby_info.stdout
+    or 'audit_backlog_limit=8192' not in audit_grubby_info.stdout
+  changed_when: true

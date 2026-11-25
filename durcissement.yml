@@ -4,8 +4,8 @@
   roles:
     - role: kernel_anssi
       tags: kernel_anssi
-    # - role: audit
-    #   tags: audit
+    - role: audit
+      tags: audit
     # - role: comptes_sudo
     #   tags: comptes_sudo
     # - role: auth_pam

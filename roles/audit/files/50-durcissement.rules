@@ -1,0 +1,25 @@
+## Géré par Ansible (rôle audit)
+## Ignorer les erreurs (fichier absent...) au lieu d'arrêter le chargement
+-i
+
+## Exécutions (EXECVE) des utilisateurs connectés, y compris via sudo
+-a always,exit -F arch=b64 -S execve,execveat -F auid>=1000 -F auid!=4294967295 -k user_exec
+-a always,exit -F arch=b32 -S execve,execveat -F auid>=1000 -F auid!=4294967295 -k user_exec
+
+## Modifications de permissions (chmod) par les utilisateurs
+-a always,exit -F arch=b64 -S chmod,fchmod,fchmodat -F auid>=1000 -F auid!=4294967295 -k user_perms
+-a always,exit -F arch=b32 -S chmod,fchmod,fchmodat -F auid>=1000 -F auid!=4294967295 -k user_perms
+
+## Connexions / déconnexions (fichiers de session)
+-w /var/log/wtmp -p wa -k logins
+-w /var/log/btmp -p wa -k logins
+-w /var/log/lastlog -p wa -k logins
+
+## Fichiers de sécurité
+-w /etc/sysctl.d/ -p wa -k sysctl
+-w /etc/sudoers -p wa -k sudoers
+-w /etc/sudoers.d/ -p wa -k sudoers
+-w /etc/pam.d/ -p wa -k pam
+-w /etc/authselect/ -p wa -k pam
+-w /etc/ssh/sshd_config -p wa -k sshd
+-w /etc/ssh/sshd_config.d/ -p wa -k sshd
