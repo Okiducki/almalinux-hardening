@@ -1,0 +1,57 @@
+---
+# Sur Red Hat, PAM est géré par authselect : on ne modifie jamais /etc/pam.d/system-auth
+# à la main. On crée un profil personnalisé, on le modifie, puis on le sélectionne.
+
+- name: Lire le profil authselect actuel
+  ansible.builtin.command: authselect current --raw
+  register: auth_pam_profil_actuel
+  changed_when: false
+  failed_when: false
+
+- name: Créer le profil authselect personnalisé "durci" (basé sur sssd)
+  ansible.builtin.command: authselect create-profile durci -b sssd --symlink-meta
+  args:
+    creates: /etc/authselect/custom/durci
+
+- name: Ajouter pam_time (restriction horaire) à la section account du profil
+  ansible.builtin.lineinfile:
+    path: "/etc/authselect/custom/durci/{{ item }}"
+    regexp: 'pam_time\.so'
+    insertafter: '^account\s+required\s+pam_unix\.so'
+    line: "account     required                                     pam_time.so"
+  loop:
+    - system-auth
+    - password-auth
+  notify: Appliquer le profil authselect
+
+- name: Sélectionner le profil "durci" avec le verrouillage après échecs (faillock)
+  ansible.builtin.command: authselect select custom/durci with-faillock --force
+  when: >-
+    'custom/durci' not in auth_pam_profil_actuel.stdout
+    or 'with-faillock' not in auth_pam_profil_actuel.stdout
+  changed_when: true
+
+- name: Verrouiller un compte 15 minutes après 3 échecs en 15 minutes
+  ansible.builtin.lineinfile:
+    path: /etc/security/faillock.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: '^#?\s*deny\s*=', line: "deny = 3" }
+    - { regexp: '^#?\s*fail_interval\s*=', line: "fail_interval = 900" }
+    - { regexp: '^#?\s*unlock_time\s*=', line: "unlock_time = 900" }
+    - { regexp: '^#?\s*audit\s*$', line: "audit" }
+
+- name: Appliquer la politique de mot de passe (pwquality)
+  ansible.builtin.copy:
+    src: 90-durcissement.conf
+    dest: /etc/security/pwquality.conf.d/90-durcissement.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Limiter les connexions de l'administrateur à sa plage horaire (pam_time)
+  ansible.builtin.lineinfile:
+    path: /etc/security/time.conf
+    regexp: ';{{ utilisateur_admin }};'
+    line: "*;*;{{ utilisateur_admin }};{{ plage_horaire_admin }}"

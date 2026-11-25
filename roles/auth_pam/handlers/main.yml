@@ -1,0 +1,4 @@
+---
+- name: Appliquer le profil authselect
+  ansible.builtin.command: authselect apply-changes
+  changed_when: true
