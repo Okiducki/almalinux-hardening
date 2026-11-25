@@ -6,8 +6,8 @@
       tags: kernel_anssi
     - role: audit
       tags: audit
-    # - role: comptes_sudo
-    #   tags: comptes_sudo
+    - role: comptes_sudo
+      tags: comptes_sudo
     # - role: auth_pam
     #   tags: auth_pam
     # - role: ssh_mfa

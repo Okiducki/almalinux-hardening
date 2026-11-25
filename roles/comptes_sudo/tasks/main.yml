@@ -1,0 +1,67 @@
+---
+- name: Créer le compte d'administration
+  ansible.builtin.user:
+    name: "{{ utilisateur_admin }}"
+    groups: wheel
+    append: true
+    shell: /bin/bash
+    password: "{{ vault_mdp_localadm | password_hash('sha512') }}"
+    update_password: on_create
+
+- name: Créer le compte de secours (console uniquement)
+  ansible.builtin.user:
+    name: "{{ utilisateur_secours }}"
+    groups: wheel
+    append: true
+    shell: /bin/bash
+    password: "{{ vault_mdp_rescue | password_hash('sha512') }}"
+    update_password: on_create
+
+- name: Autoriser le compte d'automatisation à utiliser sudo sans mot de passe
+  ansible.builtin.copy:
+    content: "{{ utilisateur_ansible }} ALL=(ALL) NOPASSWD: ALL\n"
+    dest: /etc/sudoers.d/20-ansible
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s
+
+- name: Journaliser sudo dans /var/log/sudo.log et imposer le umask 0007
+  ansible.builtin.copy:
+    content: |
+      # Géré par Ansible (rôle comptes_sudo)
+      Defaults logfile=/var/log/sudo.log
+      Defaults umask=0007
+    dest: /etc/sudoers.d/30-durcissement
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s
+
+- name: Umask 0007 pour la création de comptes et les sessions PAM
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: '^UMASK\s'
+    line: "UMASK\t\t007"
+
+- name: Umask 0007 dans /etc/profile et /etc/bashrc
+  ansible.builtin.replace:
+    path: "{{ item }}"
+    regexp: '^(\s*)umask\s+0?0[02]2\s*$'
+    replace: '\1umask 0007'
+  loop:
+    - /etc/profile
+    - /etc/bashrc
+
+- name: Umask 0007 pour tous les shells (lu en dernier)
+  ansible.builtin.copy:
+    content: "# Géré par Ansible (rôle comptes_sudo)\numask 0007\n"
+    dest: /etc/profile.d/zz-umask.sh
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Verrouiller le mot de passe de root
+  ansible.builtin.user:
+    name: root
+    password_lock: true
