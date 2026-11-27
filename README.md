@@ -11,7 +11,7 @@ Un serveur neuf est durci en **2 minutes**, et un second passage ne modifie rien
 | Mesure | Avant | Après |
 | --- | --- | --- |
 | Score Lynis (Hardening index) | 69 | 73 |
-| Paramètres noyau ANSSI conformes | XX / 45 | 45 / 45 |
+| Paramètres noyau ANSSI conformes | 15 / 45 | 45 / 45 |
 | Connexion SSH de root | autorisée | refusée |
 | Authentification SSH | mot de passe | clé + code OTP |
 | Élévation de privilèges (sudo) | mot de passe | code OTP |
