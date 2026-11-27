@@ -90,7 +90,3 @@ Le projet a été conçu pour EL9, puis adapté à EL10 lors des tests :
 
 TP de durcissement Linux réalisés manuellement sur Arch Linux en master cybersécurité,
 automatisés et adaptés à l'environnement Red Hat.
-
-## Licence
-
-MIT
