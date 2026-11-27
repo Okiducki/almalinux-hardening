@@ -14,5 +14,5 @@
       tags: ssh_mfa
     - role: grub
       tags: grub
-    # - role: socle
-    #   tags: socle
+    - role: socle
+      tags: socle

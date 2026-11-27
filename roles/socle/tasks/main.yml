@@ -1,0 +1,53 @@
+---
+- name: Installer firewalld et dnf-automatic
+  ansible.builtin.dnf:
+    name:
+      - firewalld
+      - dnf-automatic
+    state: present
+
+- name: Activer le pare-feu
+  ansible.builtin.systemd_service:
+    name: firewalld
+    enabled: true
+    state: started
+
+- name: Autoriser SSH dans le pare-feu
+  ansible.posix.firewalld:
+    zone: public
+    service: ssh
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Fermer les services ouverts par défaut et inutiles
+  ansible.posix.firewalld:
+    zone: public
+    service: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: disabled
+  loop:
+    - cockpit
+    - dhcpv6-client
+
+- name: Garder SELinux en mode enforcing
+  ansible.posix.selinux:
+    policy: targeted
+    state: enforcing
+
+- name: Installer automatiquement les mises à jour de sécurité
+  ansible.builtin.lineinfile:
+    path: /etc/dnf/automatic.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    insertafter: '^\[commands\]'
+  loop:
+    - { regexp: '^#?\s*upgrade_type\s*=', line: "upgrade_type = security" }
+    - { regexp: '^#?\s*apply_updates\s*=', line: "apply_updates = yes" }
+
+- name: Activer le timer des mises à jour automatiques
+  ansible.builtin.systemd_service:
+    name: dnf-automatic.timer
+    enabled: true
+    state: started
