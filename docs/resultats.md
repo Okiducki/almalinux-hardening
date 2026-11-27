@@ -5,3 +5,7 @@ Connexion SSH de root = without-password
 Authentification SSH = mot de passe ou clé
 Profil authselect = Profile ID: local | Enabled features: None
 kernel.sysrq = 16
+
+Mesure Après
+
+Score Lynis (Hardening index) = 73
