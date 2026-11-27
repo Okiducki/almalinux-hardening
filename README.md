@@ -51,7 +51,7 @@ Un serveur neuf est durci en **2 minutes**, et un second passage ne modifie rien
 ## Utilisation
 
 ```bash
-git clone https://github.com/<ton-pseudo>/almalinux-hardening.git
+git clone https://github.com/Okiducki/almalinux-hardening.git
 cd almalinux-hardening
 cp group_vars/all/vault.yml.example group_vars/all/vault.yml   # puis remplir les valeurs
 ansible-vault encrypt group_vars/all/vault.yml
