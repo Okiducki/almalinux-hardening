@@ -1,0 +1,35 @@
+---
+- name: Vérifier que le hash GRUB du vault a le bon format (et n'est pas la valeur factice)
+  ansible.builtin.assert:
+    that:
+      - vault_hash_grub is match('^grub\.pbkdf2\.sha512\.')
+      - "'XXXXXXXX' not in vault_hash_grub"
+    fail_msg: "vault_hash_grub doit être un vrai hash grub.pbkdf2.sha512... (voir l'étape 9.1)"
+    quiet: true
+
+- name: Protéger l'édition de GRUB par mot de passe (utilisateur GRUB "root")
+  ansible.builtin.copy:
+    content: "GRUB2_PASSWORD={{ vault_hash_grub }}\n"
+    dest: /boot/grub2/user.cfg
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Réserver la configuration de GRUB à root (fichiers)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop:
+    - /boot/grub2/grub.cfg
+    - /etc/default/grub
+
+- name: Réserver les scripts de GRUB à root (dossier)
+  ansible.builtin.file:
+    path: /etc/grub.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"

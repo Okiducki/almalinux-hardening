@@ -12,7 +12,7 @@
       tags: auth_pam
     - role: ssh_mfa
       tags: ssh_mfa
-    # - role: grub
-    #   tags: grub
+    - role: grub
+      tags: grub
     # - role: socle
     #   tags: socle
